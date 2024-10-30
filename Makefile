@@ -1,42 +1,26 @@
-REBAR := ./rebar3
-REBAR_URL := https://s3.amazonaws.com/rebar3/rebar3
-ERL       ?= erl
+IGNORE_DEPS += edown eper eunit_formatters meck node_package rebar_lock_deps_plugin rebar_vsn_plugin reltool_util
+C_SRC_DIR = /path/do/not/exist
+C_SRC_TYPE = rebar
+DRV_CFLAGS = -fPIC
+export DRV_CFLAGS
+ERLANG_ARCH = 64
+export ERLANG_ARCH
+ERLC_OPTS = +debug_info
+export ERLC_OPTS
 
-.PHONY: compile test
+DEPS += pc
+dep_pc = hex 1.14.0 undefined
 
-all: compile
 
-compile: $(REBAR)
-	$(REBAR) compile
+rebar_dep: preprocess pre-deps deps pre-app app
 
-shell: $(REBAR)
-	$(REBAR) shell
+preprocess::
 
-test: $(REBAR)
-	$(REBAR) as test eunit
+pre-deps::
 
-dialyzer: $(REBAR)
-	$(REBAR) as test dialyzer
+pre-app::
 
-xref: $(REBAR)
-	$(REBAR) as test xref
+pre-app::
+	$(MAKE) -f c_src/Makefile.erlang.mk
 
-clean: $(REBAR) clean_doc
-	$(REBAR) clean
-	
-clean_doc:
-	@rm -f doc/*.html
-	@rm -f doc/erlang.png
-	@rm -f doc/edoc-info
-
-edoc:  $(REBAR)
-	$(REBAR) edoc
-
-edoc_private:  $(REBAR)
-	$(REBAR) as edoc_private edoc
-
-./rebar3:
-	$(ERL) -noshell -s inets -s ssl \
-	  -eval '{ok, saved_to_file} = httpc:request(get, {"$(REBAR_URL)", []}, [], [{stream, "./rebar3"}])' \
-	  -s init stop
-	chmod +x ./rebar3
+include $(if $(ERLANG_MK_FILENAME),$(ERLANG_MK_FILENAME),erlang.mk)
